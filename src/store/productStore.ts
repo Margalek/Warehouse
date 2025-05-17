@@ -2,7 +2,7 @@ import { create, StateCreator } from 'zustand';
 import type { Product } from '@/types/product';
 import * as productService from '@/services/productService';
 
-interface ProductState {
+export interface ProductState {
   products: Product[];
   isLoading: boolean;
   error: string | null;
