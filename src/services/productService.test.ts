@@ -584,9 +584,9 @@ describe('productService', () => {
 
         expect(dataPassed).toEqual(
           reportProducts.map((p) => {
-            const selected: Partial<Product> = {};
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            fullReportColumns.forEach((col) => (selected[col] = p[col] as any));
+            const selected: Record<string, any> = {};
+            fullReportColumns.forEach((col) => (selected[col] = p[col]));
             return selected;
           }),
         );
@@ -627,11 +627,9 @@ describe('productService', () => {
         const expectedShortageProducts = [reportProducts[0]]; // Only Product A is a shortage based on its own MSL
         expect(dataPassed).toEqual(
           expectedShortageProducts.map((p) => {
-            const selected: Partial<Product> = {};
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            shortagesReportColumns.forEach(
-              (col) => (selected[col] = p[col] as any),
-            );
+            const selected: Record<string, any> = {};
+            shortagesReportColumns.forEach((col) => (selected[col] = p[col]));
             return selected;
           }),
         );
@@ -655,11 +653,9 @@ describe('productService', () => {
         expect(dataPassed).toEqual(
           expect.arrayContaining(
             expectedShortageProducts.map((p) => {
-              const selected: Partial<Product> = {};
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              shortagesReportColumns.forEach(
-                (col) => (selected[col] = p[col] as any),
-              );
+              const selected: Record<string, any> = {};
+              shortagesReportColumns.forEach((col) => (selected[col] = p[col]));
               // Product C will have undefined MSL in the output as it doesn't have one itself
               if (p.id === 'report-3') selected.minimumStockLevel = undefined;
               return selected;
@@ -683,11 +679,9 @@ describe('productService', () => {
         const expectedShortageProducts = [productsWithoutMSL[0]];
         expect(dataPassed).toEqual(
           expectedShortageProducts.map((p) => {
-            const selected: Partial<Product> = {};
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            shortagesReportColumns.forEach(
-              (col) => (selected[col] = p[col] as any),
-            );
+            const selected: Record<string, any> = {};
+            shortagesReportColumns.forEach((col) => (selected[col] = p[col]));
             return selected;
           }),
         );
