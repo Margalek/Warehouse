@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProductStore } from '@/store/productStore';
 import type { Product } from '@/types/product';
 import type { ProductFilterCriteria, SortCriteria } from '@/types/common.types';
+import { useDebounce } from '@/hooks/useDebounce';
 
 import { Navbar } from '@/components/layout/Navbar';
 import { ProductTable } from '@/components/products/ProductTable';
@@ -12,6 +13,7 @@ import { FileUpload } from '@/components/shared/FileUpload';
 import { ConfirmationModal } from '@/components/shared/ConfirmationModal';
 
 import { Button } from '@/components/ui/button';
+import * as productService from '@/services/productService';
 // import { useToast } from "@/components/ui/use-toast"; // Will be needed later for feedback
 
 export function DashboardPage() {
@@ -26,9 +28,13 @@ export function DashboardPage() {
     // addProduct, // addProduct action is available but form is on separate page
     // updateProduct, // updateProduct action is available but form is on separate page
     deleteProduct: deleteProductFromStore,
+    fetchProducts: refreshProductList,
   } = useProductStore();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [instantSearchInput, setInstantSearchInput] = useState('');
+  const debouncedSearchInput = useDebounce(instantSearchInput, 300);
+  const [finalSearchTerm, setFinalSearchTerm] = useState('');
+
   const [filters, setFilters] = useState<Partial<ProductFilterCriteria>>({});
   const [sort, setSort] = useState<SortCriteria<Product> | undefined>(
     undefined,
@@ -41,8 +47,12 @@ export function DashboardPage() {
     fetchProducts();
   }, [fetchProducts]);
 
+  useEffect(() => {
+    setFinalSearchTerm(debouncedSearchInput.toLowerCase());
+  }, [debouncedSearchInput]);
+
   const handleSearchChange = (term: string) => {
-    setSearchTerm(term.toLowerCase());
+    setInstantSearchInput(term);
   };
 
   const handleFilterChange = (newFilters: Partial<ProductFilterCriteria>) => {
@@ -79,13 +89,13 @@ export function DashboardPage() {
   const filteredAndSortedProducts = useMemo(() => {
     let processedProducts = [...products];
 
-    // Apply search
-    if (searchTerm) {
+    // Apply search using finalSearchTerm
+    if (finalSearchTerm) {
       processedProducts = processedProducts.filter(
         (p) =>
-          p.name.toLowerCase().includes(searchTerm) ||
-          p.id.toLowerCase().includes(searchTerm) ||
-          p.location?.toLowerCase().includes(searchTerm),
+          p.name.toLowerCase().includes(finalSearchTerm) ||
+          p.id.toLowerCase().includes(finalSearchTerm) ||
+          p.location?.toLowerCase().includes(finalSearchTerm),
       );
     }
 
@@ -122,23 +132,118 @@ export function DashboardPage() {
       });
     }
     return processedProducts;
-  }, [products, searchTerm, filters, sort]);
+  }, [products, finalSearchTerm, filters, sort]);
 
-  // Placeholder handlers for import/export/reports
-  const handleImport = (file: File) => {
-    console.log('Importing file:', file.name);
-    // TODO: Call productService.importProducts then fetchProducts()
-    // toast({ title: "Import", description: "Import functionality pending." });
+  const handleImport = async (file: File) => {
+    // const { toast } = useToast(); // Initialize toast here if used
+    if (!file) {
+      // toast({ title: "Import Error", description: "No file selected.", variant: "destructive" });
+      console.error('No file selected for import.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        if (!content) {
+          // toast({ title: "Import Error", description: "File content is empty or unreadable.", variant: "destructive" });
+          console.error('File content is empty or unreadable.');
+          return;
+        }
+        const importedProducts = JSON.parse(content);
+
+        // Define a minimal type for the quick validation check
+        type MinProductValidation = {
+          id?: unknown;
+          name?: unknown;
+          [key: string]: unknown;
+        };
+
+        // Basic validation (more thorough validation should be in productService)
+        if (
+          !Array.isArray(importedProducts) ||
+          importedProducts.some((p: MinProductValidation) => !p.id || !p.name)
+        ) {
+          // toast({ title: "Import Error", description: "Invalid file format or missing required product fields.", variant: "destructive" });
+          console.error(
+            'Invalid file format. Expected an array of products with id and name.',
+          );
+          return;
+        }
+
+        // For now, implementing only 'replace' strategy with a simple confirm.
+        // TODO: Implement strategy selection (replace/merge) possibly using a modal.
+        if (
+          window.confirm(
+            'Are you sure you want to replace the current inventory with the imported data?',
+          )
+        ) {
+          productService.importProducts(importedProducts, 'replace');
+          refreshProductList(); // Refresh products from store
+          // toast({ title: "Import Successful", description: "Inventory data imported and replaced successfully." });
+          console.log('Import successful (replace)');
+        } else {
+          // toast({ title: "Import Cancelled", description: "Inventory import was cancelled." });
+          console.log('Import cancelled by user.');
+        }
+      } catch (error) {
+        console.error('Import failed:', error);
+        // toast({ title: "Import Error", description: `Failed to import products: ${error.message}`, variant: "destructive" });
+      }
+    };
+    reader.onerror = () => {
+      console.error('Failed to read file.');
+      // toast({ title: "Import Error", description: "Failed to read the selected file.", variant: "destructive" });
+    };
+    reader.readAsText(file);
   };
+
   const handleExport = () => {
-    console.log('Exporting data...');
-    // TODO: Call productService.exportProducts and trigger download
-    // toast({ title: "Export", description: "Export functionality pending." });
+    try {
+      const productsToExport = productService.exportProducts();
+      const jsonData = JSON.stringify(productsToExport, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      link.download = `inventory_backup_${timestamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      // toast({ title: "Export Successful", description: "Inventory data exported." });
+      console.log('Export successful');
+    } catch (error) {
+      console.error('Export failed:', error);
+      // toast({ title: "Export Error", description: "Failed to export inventory data.", variant: "destructive" });
+    }
   };
+
   const handleGenerateReport = (type: 'full' | 'shortages') => {
-    console.log(`Generating ${type} report...`);
-    // TODO: Call productService.generateReportCSV and trigger download
-    // toast({ title: "Report", description: `${type} report functionality pending.` });
+    // const { toast } = useToast(); // Initialize toast here if used
+    try {
+      // The productService.generateReportCSV expects the current list of products.
+      // For shortages, it also needs the globalMinStock, which we are not implementing yet via UI.
+      // For now, shortages report will rely on per-product minimumStockLevel if set.
+      const csvData = productService.generateReportCSV(products, type);
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // YYYY-MM-DDTHH-MM-SS-mmmZ
+      link.download = `${type}_report_${timestamp}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      // toast({ title: "Report Generated", description: `${type.charAt(0).toUpperCase() + type.slice(1)} report generated successfully.` });
+      console.log(`${type} report generated successfully.`);
+    } catch (error) {
+      console.error(`Failed to generate ${type} report:`, error);
+      // toast({ title: "Report Error", description: `Failed to generate ${type} report.`, variant: "destructive" });
+    }
   };
 
   if (isLoading && products.length === 0) {
