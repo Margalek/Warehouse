@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { formatISO } from 'date-fns';
-import Papa from 'papaparse';
+import { unparse } from 'papaparse';
 import type { Product } from '@/types/product';
 import * as localStorageService from './localStorageService';
 
@@ -223,7 +223,8 @@ export function generateReportCSV(
 
   // Select only the specified columns for the CSV
   const selectedData = dataForCSV.map((product) => {
-    const selectedProduct: Partial<Product> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const selectedProduct: any = {};
     columns.forEach((column) => {
       selectedProduct[column] = product[column];
     });
@@ -233,10 +234,10 @@ export function generateReportCSV(
   if (selectedData.length === 0) {
     // Papa.unparse requires at least one row or explicit fields for header when data is empty.
     // To ensure header is always present even for empty data:
-    return Papa.unparse({ fields: columns.map(String), data: [] });
+    return unparse({ fields: columns.map(String), data: [] });
   }
 
-  return Papa.unparse(selectedData, {
+  return unparse(selectedData, {
     columns: columns.map(String), // PapaParse expects column names as strings
     header: true,
   });

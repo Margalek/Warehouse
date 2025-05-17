@@ -2,7 +2,8 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['@testing-library/jest-dom/extend-expect'],
+  setupFilesAfterEnv: ['@testing-library/jest-dom'],
+  // extensionsToTreatAsEsm: ['.ts', '.tsx'], // Removed for CJS target
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     // Handle CSS Modules (if you use them, though Shadcn/UI typically doesn't rely on them heavily for components)
@@ -12,7 +13,7 @@ module.exports = {
     '^.+\\\.tsx?$': [
       'ts-jest',
       {
-        tsconfig: 'tsconfig.json', // or tsconfig.spec.json if you have a separate one
+        tsconfig: 'tsconfig.jest.json', // Point to the new Jest-specific tsconfig
       },
     ],
   },
