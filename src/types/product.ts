@@ -1,0 +1,21 @@
+/**
+ * Represents a product in the inventory.
+ */
+export interface Product {
+  /** Unique identifier for the product (UUID format). */
+  id: string;
+  /** Name of the product. Max 255 characters. Required. */
+  name: string;
+  /** Quantity of the product in stock. Integer, non-negative. Required. */
+  quantity: number;
+  /** Unit of measurement for the product (e.g., "pcs", "kg", "l"). Max 50 characters. Required. */
+  unit: string;
+  /** Location of the product in the warehouse (e.g., "Shelf A3"). Max 100 characters. Optional. */
+  location?: string;
+  /** Date when the product was first added (ISO 8601 format). */
+  dateAdded: string;
+  /** Date when the product was last modified (ISO 8601 format). */
+  dateModified: string;
+  /** Optional minimum stock level for shortage reports. */
+  minimumStockLevel?: number;
+}
