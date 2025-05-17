@@ -1,6 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+/**
+ * Application navigation bar component.
+ * Displays the application title/logo and primary navigation links.
+ */
 export function Navbar() {
   return (
     <nav className="bg-primary text-primary-foreground p-4 shadow-md">

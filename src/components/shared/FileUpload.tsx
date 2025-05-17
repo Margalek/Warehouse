@@ -3,9 +3,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input'; // For hidden file input styling if needed, or direct use
 
 interface FileUploadProps {
+  /**
+   * Callback function invoked when a file is selected by the user.
+   * @param file The selected File object.
+   */
   onFileSelect: (file: File) => void;
+  /**
+   * Optional string specifying the file types that the input should accept.
+   * Example: ".json, .csv, image/*"
+   * @default ".json"
+   */
   acceptedFileTypes?: string; // e.g., ".json, .csv"
+  /**
+   * Optional text to display on the upload button.
+   * @default "Upload File"
+   */
   buttonText?: string;
+  /**
+   * Optional variant for the button's appearance, based on Shadcn/UI Button variants.
+   * @default "outline"
+   */
   buttonVariant?:
     | 'default'
     | 'destructive'
@@ -13,6 +30,7 @@ interface FileUploadProps {
     | 'secondary'
     | 'ghost'
     | 'link';
+  /** Optional CSS class name to apply to the root div of the component. */
   className?: string;
 }
 

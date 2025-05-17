@@ -11,13 +11,30 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface ConfirmationModalProps {
+  /** Controls whether the modal is open or closed. */
   isOpen: boolean;
+  /** Callback function invoked when the modal is requested to be closed (e.g., by clicking outside or the cancel button). */
   onClose: () => void;
+  /** Callback function invoked when the confirm button is clicked. */
   onConfirm: () => void;
+  /** The title text displayed in the modal header. */
   title: string;
+  /** The message content of the modal. Can be a string or a ReactNode for more complex content. */
   message: string | React.ReactNode;
+  /**
+   * Optional text for the confirm button.
+   * @default "Confirm"
+   */
   confirmButtonText?: string;
+  /**
+   * Optional text for the cancel button.
+   * @default "Cancel"
+   */
   cancelButtonText?: string;
+  /**
+   * Optional variant for the confirm button's appearance, based on Shadcn/UI Button variants.
+   * @default "default"
+   */
   confirmButtonVariant?:
     | 'default'
     | 'destructive'

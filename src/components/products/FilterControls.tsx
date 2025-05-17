@@ -6,7 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface FilterControlsProps {
+  /**
+   * The current set of active filters.
+   * Allows the component to display the current filter state (e.g., checked boxes, input values).
+   */
   currentFilters: Partial<ProductFilterCriteria>; // Allow partial updates
+  /**
+   * Callback function invoked when any filter control changes its value.
+   * It passes an object with the filter(s) that changed.
+   * @param newFilters An object containing the updated filter criteria.
+   */
   onFilterChange: (newFilters: Partial<ProductFilterCriteria>) => void;
   // distinctUnits?: string[]; // For a unit dropdown filter
   // distinctLocations?: string[]; // For a location dropdown filter

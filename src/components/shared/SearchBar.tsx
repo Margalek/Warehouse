@@ -3,8 +3,20 @@ import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/useDebounce'; // Assuming useDebounce hook is created
 
 interface SearchBarProps {
+  /**
+   * Callback function invoked when the debounced search term changes.
+   * @param searchTerm The debounced search term string.
+   */
   onSearchChange: (searchTerm: string) => void;
+  /**
+   * Optional delay in milliseconds for debouncing the search input.
+   * @default 300
+   */
   debounceDelay?: number;
+  /**
+   * Optional placeholder text for the search input field.
+   * @default "Search..."
+   */
   placeholder?: string;
 }
 
