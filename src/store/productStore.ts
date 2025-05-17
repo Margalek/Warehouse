@@ -1,4 +1,5 @@
-import { create, StateCreator } from 'zustand';
+import { create } from 'zustand';
+import type { StateCreator } from 'zustand';
 import type { Product } from '@/types/product';
 import * as productService from '@/services/productService';
 
