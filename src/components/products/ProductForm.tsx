@@ -1,107 +1,249 @@
-import React from 'react';
-import type { Product } from '@/types/product'; // Assuming Product type will be needed
+import React, { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import type { ControllerRenderProps } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import type {
+  Product,
+  ProductFormData as ServiceProductFormData,
+} from '@/types/product';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
-// Define ProductFormData if not already defined elsewhere, or import it
-// For now, using a placeholder. Requirements point to react-hook-form and validation.
-export interface ProductFormData {
-  name: string;
-  quantity: number;
-  unit: string;
-  location?: string;
-  minimumStockLevel?: number;
-}
+const internalProductFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(255, 'Name must be 255 characters or less'),
+  quantity: z.coerce
+    .number()
+    .int('Quantity must be an integer')
+    .nonnegative('Quantity must be non-negative'),
+  unit: z
+    .string()
+    .min(1, 'Unit is required')
+    .max(50, 'Unit must be 50 characters or less'),
+  location: z
+    .string()
+    .max(100, 'Location must be 100 characters or less')
+    .optional()
+    .or(z.literal('')),
+  minimumStockLevel: z.coerce
+    .number()
+    .int('Min. stock must be an integer')
+    .nonnegative('Min. stock must be non-negative')
+    .optional()
+    .or(z.literal(NaN)),
+  tags: z.string().optional().or(z.literal('')), // Comma-separated string for tags from form
+});
+
+// This is the type for the form's internal state/validation
+type InternalFormShape = z.infer<typeof internalProductFormSchema>;
 
 interface ProductFormProps {
-  onSubmit: (data: ProductFormData) => void;
-  initialData?: Product; // For editing
-  // Other props like isLoading, submitButtonText etc. can be added
+  // This onSubmit expects data structured as per ServiceProductFormData (from @/types/product.ts)
+  onSubmit: (data: ServiceProductFormData) => void;
+  initialData?: Product;
+  isLoading?: boolean;
 }
 
-export function ProductForm({ onSubmit, initialData }: ProductFormProps) {
-  // TODO: Implement form using react-hook-form and Shadcn/UI components
-  // Based on REQUIREMENTS.MD (7.1) and IMPLEMENTATION.MD (7.2)
+export function ProductForm({
+  onSubmit,
+  initialData,
+  isLoading,
+}: ProductFormProps) {
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<InternalFormShape>({
+    resolver: zodResolver(internalProductFormSchema),
+    defaultValues: {
+      name: '',
+      quantity: 0,
+      unit: '',
+      location: '',
+      minimumStockLevel: undefined,
+      tags: '',
+    },
+  });
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Placeholder for form data gathering
-    const formData: ProductFormData = {
-      name: 'Test Product', // Replace with actual form values
-      quantity: 10, // Replace with actual form values
-      unit: 'pcs', // Replace with actual form values
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        name: initialData.name,
+        quantity: initialData.quantity,
+        unit: initialData.unit,
+        location: initialData.location || '',
+        minimumStockLevel:
+          initialData.minimumStockLevel === undefined ||
+          initialData.minimumStockLevel === null
+            ? undefined
+            : initialData.minimumStockLevel,
+        tags: initialData.tags?.join(', ') || '', // Convert array to comma-separated string for form
+      });
+    }
+  }, [initialData, reset]);
+
+  const processSubmit = (formData: InternalFormShape) => {
+    const dataToSubmit: ServiceProductFormData = {
+      name: formData.name,
+      quantity: formData.quantity,
+      unit: formData.unit,
+      location: formData.location || undefined, // Ensure empty string becomes undefined if that's preferred for service
+      minimumStockLevel: isNaN(formData.minimumStockLevel as number)
+        ? undefined
+        : Number(formData.minimumStockLevel),
+      // Convert comma-separated string from form to array of strings for service
+      tags: formData.tags
+        ? formData.tags
+            .split(',')
+            .map((tag: string) => tag.trim())
+            .filter((tag: string) => tag !== '')
+        : undefined,
     };
-    onSubmit(formData);
+    onSubmit(dataToSubmit);
   };
 
+  // Helper type for Controller render prop
+  type FormFieldRenderProps = ControllerRenderProps<
+    InternalFormShape,
+    keyof InternalFormShape
+  >;
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-6 p-4 border rounded-md shadow"
-    >
-      <h2 className="text-2xl font-semibold mb-4">
-        {initialData ? 'Edit Product' : 'Add New Product'}
-      </h2>
-
-      {/* Placeholder for form fields - to be replaced with Shadcn/UI Input, Label, etc. */}
-      <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Product Name
-        </label>
-        <input
-          type="text"
+    <form onSubmit={handleSubmit(processSubmit)} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="name">Product Name</Label>
+        <Controller
           name="name"
-          id="name"
-          defaultValue={initialData?.name || ''}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          control={control}
+          render={({ field }: { field: FormFieldRenderProps }) => (
+            <Input id="name" placeholder="e.g., Industrial Widget" {...field} />
+          )}
         />
+        {errors.name && (
+          <p className="text-sm text-red-500">{errors.name.message}</p>
+        )}
       </div>
 
-      <div>
-        <label
-          htmlFor="quantity"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Quantity
-        </label>
-        <input
-          type="number"
-          name="quantity"
-          id="quantity"
-          defaultValue={initialData?.quantity || 0}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="quantity">Quantity</Label>
+          <Controller
+            name="quantity"
+            control={control}
+            render={({ field }: { field: FormFieldRenderProps }) => (
+              <Input
+                id="quantity"
+                type="number"
+                placeholder="e.g., 100"
+                {...field}
+              />
+            )}
+          />
+          {errors.quantity && (
+            <p className="text-sm text-red-500">{errors.quantity.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="unit">Unit</Label>
+          <Controller
+            name="unit"
+            control={control}
+            render={({ field }: { field: FormFieldRenderProps }) => (
+              <Input id="unit" placeholder="e.g., pcs, kg, ltr" {...field} />
+            )}
+          />
+          {errors.unit && (
+            <p className="text-sm text-red-500">{errors.unit.message}</p>
+          )}
+        </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="unit"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Unit
-        </label>
-        <input
-          type="text"
-          name="unit"
-          id="unit"
-          defaultValue={initialData?.unit || ''}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+      <div className="space-y-2">
+        <Label htmlFor="location">Location (Optional)</Label>
+        <Controller
+          name="location"
+          control={control}
+          render={({ field }: { field: FormFieldRenderProps }) => (
+            <Input
+              id="location"
+              placeholder="e.g., Shelf A1, Bay 3"
+              {...field}
+            />
+          )}
         />
+        {errors.location && (
+          <p className="text-sm text-red-500">{errors.location.message}</p>
+        )}
       </div>
 
-      {/* Add fields for location and minimumStockLevel similarly */}
+      <div className="space-y-2">
+        <Label htmlFor="minimumStockLevel">
+          Minimum Stock Level (Optional)
+        </Label>
+        <Controller
+          name="minimumStockLevel"
+          control={control}
+          render={({ field }: { field: FormFieldRenderProps }) => (
+            <Input
+              id="minimumStockLevel"
+              type="number"
+              placeholder="e.g., 10"
+              {...field}
+              value={
+                field.value === null ||
+                field.value === undefined ||
+                isNaN(field.value as number)
+                  ? ''
+                  : field.value
+              }
+              onChange={(e) =>
+                field.onChange(
+                  e.target.value === ''
+                    ? undefined
+                    : parseInt(e.target.value, 10),
+                )
+              }
+            />
+          )}
+        />
+        {errors.minimumStockLevel && (
+          <p className="text-sm text-red-500">
+            {errors.minimumStockLevel.message}
+          </p>
+        )}
+      </div>
 
-      <button
-        type="submit"
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        {initialData ? 'Save Changes' : 'Add Product'}
-      </button>
-      <p className="text-xs text-gray-500 mt-2">
-        Note: This is a placeholder form. Full implementation with
-        react-hook-form and validation is pending.
-      </p>
+      <div className="space-y-2">
+        <Label htmlFor="tags">Tags (Optional, comma-separated)</Label>
+        <Controller
+          name="tags"
+          control={control}
+          render={({ field }: { field: FormFieldRenderProps }) => (
+            <Textarea
+              id="tags"
+              placeholder="e.g., fragile, electronics, clearance"
+              {...field}
+            />
+          )}
+        />
+        {errors.tags && (
+          <p className="text-sm text-red-500">{errors.tags.message}</p>
+        )}
+      </div>
+
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading
+          ? 'Submitting...'
+          : initialData
+            ? 'Save Changes'
+            : 'Add Product'}
+      </Button>
     </form>
   );
 }

@@ -54,7 +54,7 @@ export function DashboardPage() {
   };
 
   const handleProductDeleteRequest = (id: string) => {
-    const product = products.find((p) => p.id === id);
+    const product = products.find((p: Product) => p.id === id);
     if (product) {
       setProductToDelete(product);
       setIsDeleteModalOpen(true);
