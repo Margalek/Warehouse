@@ -43,9 +43,21 @@ const internalProductFormSchema = z.object({
 type InternalFormShape = z.infer<typeof internalProductFormSchema>;
 
 interface ProductFormProps {
-  // This onSubmit expects data structured as per ServiceProductFormData (from @/types/product.ts)
+  /**
+   * Callback function triggered when the form is submitted with valid data.
+   * The data is transformed to match the ServiceProductFormData structure.
+   * @param data The product data from the form, ready to be processed.
+   */
   onSubmit: (data: ServiceProductFormData) => void;
+  /**
+   * Optional product data to pre-fill the form for editing an existing product.
+   * If provided, the submit button text changes to "Save Changes".
+   */
   initialData?: Product;
+  /**
+   * Optional flag to indicate if the form submission is in progress.
+   * If true, the submit button is disabled and shows "Submitting...".
+   */
   isLoading?: boolean;
 }
 

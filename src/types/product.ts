@@ -18,7 +18,8 @@ export interface Product {
   dateModified: string;
   /** Optional minimum stock level for shortage reports. */
   minimumStockLevel?: number;
-  tags?: string[]; // Optional tags for searching/filtering
+  /** Optional tags for searching or filtering products. */
+  tags?: string[];
 }
 
 /**

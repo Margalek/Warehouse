@@ -4,18 +4,41 @@ import type { Product } from '@/types/product';
 import * as productService from '@/services/productService';
 
 export interface ProductState {
+  /** The list of all products in the inventory. */
   products: Product[];
+  /** True if any product-related asynchronous operation is in progress. */
   isLoading: boolean;
+  /** Stores an error message if an operation fails, otherwise null. */
   error: string | null;
+  /** Fetches all products from the product service and updates the store. */
   fetchProducts: () => void;
+  /**
+   * Adds a new product or updates an existing one (by name/unit) via the product service.
+   * Re-fetches products on success.
+   * @param productData The data for the new product.
+   * @returns A promise that resolves to the added/updated product, or null on error.
+   */
   addProduct: (
     productData: Omit<Product, 'id' | 'dateAdded' | 'dateModified'>,
-  ) => Promise<Product | null>; // Return product or null on error
+  ) => Promise<Product | null>;
+  /**
+   * Updates an existing product by its ID via the product service.
+   * Re-fetches products on success.
+   * @param id The ID of the product to update.
+   * @param updates The partial data to update the product with.
+   * @returns A promise that resolves to the updated product, or null if not found or on error.
+   */
   updateProduct: (
     id: string,
     updates: Partial<Omit<Product, 'id' | 'dateAdded'>>,
-  ) => Promise<Product | null>; // Return product or null on error
-  deleteProduct: (id: string) => Promise<boolean>; // Return true on success, false on error
+  ) => Promise<Product | null>;
+  /**
+   * Deletes a product by its ID via the product service.
+   * Re-fetches products on success.
+   * @param id The ID of the product to delete.
+   * @returns A promise that resolves to true if deletion was successful, false otherwise.
+   */
+  deleteProduct: (id: string) => Promise<boolean>;
 }
 
 // Define the StateCreator type for clarity
@@ -46,11 +69,8 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
   addProduct: async (productData) => {
     set({ isLoading: true, error: null });
     try {
-      // The productService.addProduct handles the logic of checking existing product by name/unit
-      // and updates quantity or creates new. It returns the added/updated product.
       const newProduct = productService.addProduct(productData);
-      // No need to manually set({ products: ... }) if getProducts() is called by fetch or reflects the change
-      get().fetchProducts(); // Re-fetch all products to ensure store is in sync
+      get().fetchProducts();
       return newProduct;
     } catch (e) {
       const error = e instanceof Error ? e.message : 'Failed to add product';
@@ -65,7 +85,7 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
     try {
       const updatedProduct = productService.updateProduct(id, updates);
       if (updatedProduct) {
-        get().fetchProducts(); // Re-fetch to update the list
+        get().fetchProducts();
         return updatedProduct;
       }
       throw new Error('Product not found or update failed');
@@ -82,7 +102,7 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
     try {
       const success = productService.deleteProduct(id);
       if (success) {
-        get().fetchProducts(); // Re-fetch to update the list
+        get().fetchProducts();
         return true;
       }
       throw new Error('Product not found or deletion failed');
@@ -95,4 +115,11 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
   },
 });
 
+/**
+ * Zustand store hook for managing product state and actions.
+ *
+ * Provides access to the product list, loading states, error states,
+ * and functions to fetch, add, update, and delete products.
+ * @see ProductState for detailed descriptions of available state and actions.
+ */
 export const useProductStore = create<ProductState>(productStoreCreator);

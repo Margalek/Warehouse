@@ -13,10 +13,27 @@ import { Button } from '@/components/ui/button'; // For actions
 import { ArrowUpDown } from 'lucide-react'; // For sorting icons
 
 interface ProductTableProps {
+  /** An array of products to display in the table. */
   products: Product[];
+  /**
+   * Callback function triggered when the "Edit" button for a product is clicked.
+   * @param id The ID of the product to be edited.
+   */
   onEdit: (id: string) => void;
+  /**
+   * Callback function triggered when the "Delete" button for a product is clicked.
+   * @param id The ID of the product to be deleted.
+   */
   onDelete: (id: string) => void;
+  /**
+   * Optional current sorting criteria for the product table.
+   * Used to indicate the active sort column and direction.
+   */
   sortCriteria?: SortCriteria<Product>; // Optional for now
+  /**
+   * Callback function triggered when a column header is clicked to change sorting.
+   * @param criteria The new sorting criteria (field and direction).
+   */
   onSortChange: (criteria: SortCriteria<Product>) => void; // Made mandatory as per IMPL.MD for DashboardPage
 }
 
