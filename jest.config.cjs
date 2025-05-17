@@ -2,7 +2,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['@testing-library/jest-dom'],
+  setupFilesAfterEnv: ['./jest.setup.ts', '@testing-library/jest-dom'],
   // extensionsToTreatAsEsm: ['.ts', '.tsx'], // Removed for CJS target
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
