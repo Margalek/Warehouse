@@ -112,4 +112,4 @@ Data is stored in a JSON file in the `server/data/warehouse.json` directory. The
 
 ## License
 
-MIT
+[MIT](https://github.com/Margalek/Warehouse/blob/main/LICENSE)
