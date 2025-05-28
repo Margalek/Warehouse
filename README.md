@@ -1,121 +1,115 @@
-# Warehouse Inventory Management SPA
+# Warehouse Inventory Management System
 
-A single-page application for managing product inventory in a warehouse. Users can add, edit, delete products, view inventory status, import/export data, and generate reports.
+A web-based warehouse management system that enables product tracking, inventory management, and report generation.
 
-This project is built with React, TypeScript, Vite, Tailwind CSS, and Shadcn/UI. It uses Zustand for state management and Jest with React Testing Library for testing.
+## Features
 
-## Related Documents
+- Product Management (CRUD)
+- Stock Level Tracking
+- Product Location Management
+- CSV Report Generation
+- Data Import/Export
+- Product Search and Filtering
 
-- [REQUIREMENTS.MD](./REQUIREMENTS.MD): Detailed functional and non-functional requirements.
-- [IMPLEMENTATION.MD](./IMPLEMENTATION.MD): Detailed step-by-step implementation plan.
+## Technologies
 
-## Technology Stack
+- Frontend: React + TypeScript + Vite
+- Backend: Node.js + Express
+- Styling: Tailwind CSS
+- State Management: Zustand
+- Forms: React Hook Form + Zod
+- UI Components: Radix UI
 
-- **Frontend:** React (v19+), TypeScript
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS, Shadcn/UI
-- **State Management:** Zustand
-- **Routing:** React Router DOM
-- **Form Handling:** React Hook Form, Zod
-- **Testing:** Jest, React Testing Library
-- **Linting/Formatting:** ESLint, Prettier
-- **Utilities:** `uuid`, `date-fns`, `papaparse`
+## Installation
 
-## Prerequisites
+1. Clone the repository:
 
-- Node.js (LTS version recommended, e.g., v18, v20)
-- npm (comes with Node.js)
-
-## Setup and Installation
-
-1.  **Clone the repository:**
-
-    ```bash
-    git clone <repository-url>
-    cd warehouse-inventory-management-spa
-    ```
-
-    _(Replace `<repository-url>` with the actual URL and `warehouse-inventory-management-spa` with your project's directory name if different)_
-
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-
-## Available Scripts
-
-In the project directory, you can run the following commands:
-
-- **`npm run dev`**
-  Runs the app in development mode. Open [http://localhost:5173](http://localhost:5173) (or the port specified in your Vite config) to view it in your browser. The page will reload when you make changes.
-
-- **`npm run build`**
-  Builds the app for production to the `dist` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
-
-- **`npm run lint`**
-  Lints the project files using ESLint.
-
-- **`npm run preview`**
-  Serves the production build locally for previewing.
-
-- **`npm test`**
-  Runs all tests using Jest.
-
-- **`npm run test:watch`**
-  Runs tests in interactive watch mode.
-
-- **`npm run test:coverage`**
-  Runs tests and generates a code coverage report.
-
-- **`npm run doc`**
-  Generates API documentation from TSDoc comments using TypeDoc. The output will be in the `docs/` directory.
-
-## Project Structure Overview (Key Directories)
-
-```
-.
-├── public/             # Static assets
-├── src/
-│   ├── components/     # Reusable UI components
-│   │   ├── layout/
-│   │   ├── products/
-│   │   ├── shared/
-│   │   └── ui/         # Shadcn/UI components
-│   ├── hooks/          # Custom React hooks
-│   ├── integration/    # Integration tests
-│   ├── pages/          # Page components
-│   ├── services/       # Business logic and data services (localStorage, product)
-│   ├── store/          # Zustand state management
-│   ├── styles/         # Global styles (if any beyond Tailwind)
-│   ├── types/          # TypeScript type definitions
-│   └── App.tsx         # Main application component with routing
-│   └── main.tsx        # Entry point of the application
-├── documentation/
-│   └── uml/            # UML diagrams (to be added by user)
-├── docs/               # Generated TypeDoc documentation (after running npm run doc)
-├── .eslintrc.cjs
-├── .gitignore
-├── .prettierrc.json
-├── IMPLEMENTATION.MD
-├── jest.config.cjs
-├── jest.setup.ts
-├── package.json
-├── postcss.config.js
-├── README.md           # This file
-├── REQUIREMENTS.MD
-├── tailwind.config.js
-├── tsconfig.app.json
-├── tsconfig.jest.json
-├── tsconfig.json
-├── tsconfig.node.json
-└── vite.config.ts
+```bash
+git clone [repository-url]
+cd warehouse
 ```
 
-## Key Features
+2. Install dependencies:
 
-- Product CRUD (Create, Read, Update, Delete) operations.
-- View warehouse status with sorting and filtering.
-- Search products by ID, name, or location.
-- Data persistence using browser Local Storage.
-- Import/Export inventory data via JSON files.
-- Generate warehouse status and shortage reports in CSV format.
+```bash
+npm install
+```
+
+## Running the Application
+
+The application consists of two parts: frontend and backend. Both need to be running simultaneously.
+
+### Backend (API)
+
+Start the API server:
+
+```bash
+npm run dev:server
+```
+
+The server will be available at `http://localhost:3001`
+
+#### API Endpoints
+
+- `GET /api/products` - get all products
+- `POST /api/products` - add a new product
+- `PUT /api/products/:id` - update a product
+- `DELETE /api/products/:id` - delete a product
+
+Example product structure:
+
+```json
+{
+  "id": "string",
+  "name": "string",
+  "quantity": number,
+  "unit": "string",
+  "location": "string",
+  "dateAdded": "string (ISO 8601)",
+  "dateModified": "string (ISO 8601)",
+  "minimumStockLevel": number
+}
+```
+
+### Frontend
+
+In a separate terminal, start the frontend application:
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+## Scripts
+
+- `npm run dev` - run frontend in development mode
+- `npm run dev:server` - run backend in development mode
+- `npm run build` - build the application
+- `npm run preview` - preview the built application
+- `npm run test` - run tests
+- `npm run lint` - run linter
+
+## Project Structure
+
+```
+warehouse/
+├── src/                    # Frontend source code
+│   ├── components/        # React components
+│   ├── pages/            # Application pages
+│   ├── services/         # Services and business logic
+│   ├── store/            # State management (Zustand)
+│   └── types/            # TypeScript definitions
+├── server/               # Backend source code
+│   ├── data/            # JSON data directory
+│   └── server.js        # Express server
+└── public/              # Static assets
+```
+
+## Data Storage
+
+Data is stored in a JSON file in the `server/data/warehouse.json` directory. The file is automatically created when the server is first started.
+
+## License
+
+MIT
