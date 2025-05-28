@@ -1,7 +1,8 @@
 {
-  "name": "magazine",
+  "name": "warehouse-inventory",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.9.0",
+  "description": "A modern warehouse inventory management SPA with reporting, import/export, and REST API backend.",
   "type": "module",
   "scripts": {
     "dev": "vite",
