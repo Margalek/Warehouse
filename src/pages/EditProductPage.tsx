@@ -24,10 +24,10 @@ export const EditProductPage: React.FC = () => {
       return;
     }
 
-    const fetchProduct = () => {
+    const fetchProduct = async () => {
       setIsLoading(true);
       try {
-        const fetchedProduct = productService.getProductById(productId);
+        const fetchedProduct = await productService.getProductById(productId);
         if (fetchedProduct) {
           setProduct(fetchedProduct);
         } else {

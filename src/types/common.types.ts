@@ -14,5 +14,7 @@ export interface ProductFilterCriteria {
   showOutOfStock?: boolean;
   /** Products with quantity below this threshold will be considered as low stock. */
   lowStockThreshold?: number;
+  /** If true, only shows products where quantity > minimumStockLevel (or > 0 if no minimum set) */
+  showInStockOnly?: boolean;
   // Add other specific filters as needed (e.g., unit, location)
 }

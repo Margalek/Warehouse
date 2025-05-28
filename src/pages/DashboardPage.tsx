@@ -100,6 +100,12 @@ export function DashboardPage() {
     }
 
     // Apply filters
+    if (filters.showInStockOnly) {
+      processedProducts = processedProducts.filter((p) => {
+        const minStock = p.minimumStockLevel ?? 0;
+        return p.quantity > minStock;
+      });
+    }
     if (filters.showOutOfStock) {
       processedProducts = processedProducts.filter((p) => p.quantity === 0);
     }

@@ -41,7 +41,22 @@ export function FilterControls({
     <div className="p-4 border rounded-md space-y-4 bg-card text-card-foreground shadow">
       <h3 className="text-lg font-semibold">Filter Products</h3>
 
-      {/* Example: Filter by "Out of Stock" */}
+      {/* Show In Stock Only filter */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="showInStockOnly"
+          name="showInStockOnly"
+          checked={!!currentFilters.showInStockOnly}
+          onCheckedChange={(checked) =>
+            onFilterChange({ showInStockOnly: !!checked })
+          }
+        />
+        <Label htmlFor="showInStockOnly" className="cursor-pointer">
+          Show In Stock Only
+        </Label>
+      </div>
+
+      {/* Out of Stock filter */}
       <div className="flex items-center space-x-2">
         <Checkbox
           id="showOutOfStock"
@@ -56,7 +71,7 @@ export function FilterControls({
         </Label>
       </div>
 
-      {/* Example: Filter by "Low Stock Threshold" */}
+      {/* Low Stock Threshold filter */}
       <div className="space-y-1">
         <Label htmlFor="lowStockThreshold">Low Stock Threshold</Label>
         <Input
@@ -87,6 +102,7 @@ export function FilterControls({
           onFilterChange({
             showOutOfStock: undefined,
             lowStockThreshold: undefined,
+            showInStockOnly: undefined,
             // Clear other filters too
           })
         }
