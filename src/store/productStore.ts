@@ -4,39 +4,39 @@ import type { Product } from '@/types/product';
 import * as productService from '@/services/productService';
 
 export interface ProductState {
-  /** Lista wszystkich produktów w magazynie. */
+  /** List of all products in the warehouse. */
   products: Product[];
-  /** True, jeśli jakakolwiek operacja asynchroniczna jest w toku. */
+  /** True if any asynchronous operation is in progress. */
   isLoading: boolean;
-  /** Przechowuje komunikat o błędzie, jeśli operacja się nie powiedzie, w przeciwnym razie null. */
+  /** Stores an error message if an operation fails, otherwise null. */
   error: string | null;
-  /** Pobiera wszystkie produkty z serwisu produktów i aktualizuje store. */
+  /** Fetches all products from the product service and updates the store. */
   fetchProducts: () => Promise<void>;
   /**
-   * Dodaje nowy produkt lub aktualizuje istniejący (według nazwy/jednostki) poprzez serwis produktów.
-   * Ponownie pobiera produkty po sukcesie.
-   * @param productData Dane nowego produktu.
-   * @returns Promise, który rozwiązuje się do dodanego/zaktualizowanego produktu lub null w przypadku błędu.
+   * Adds a new product or updates an existing one (by name/unit) via the product service.
+   * Fetches products again on success.
+   * @param productData New product data.
+   * @returns Promise that resolves to the added/updated product or null on error.
    */
   addProduct: (
     productData: Omit<Product, 'id' | 'dateAdded' | 'dateModified'>,
   ) => Promise<Product | null>;
   /**
-   * Aktualizuje istniejący produkt według jego ID poprzez serwis produktów.
-   * Ponownie pobiera produkty po sukcesie.
-   * @param id ID produktu do aktualizacji.
-   * @param updates Częściowe dane do aktualizacji produktu.
-   * @returns Promise, który rozwiązuje się do zaktualizowanego produktu lub null, jeśli nie znaleziono lub wystąpił błąd.
+   * Updates an existing product by its ID via the product service.
+   * Fetches products again on success.
+   * @param id Product ID to update.
+   * @param updates Partial data to update the product.
+   * @returns Promise that resolves to the updated product or null if not found or error.
    */
   updateProduct: (
     id: string,
     updates: Partial<Omit<Product, 'id' | 'dateAdded'>>,
   ) => Promise<Product | null>;
   /**
-   * Usuwa produkt według jego ID poprzez serwis produktów.
-   * Ponownie pobiera produkty po sukcesie.
-   * @param id ID produktu do usunięcia.
-   * @returns Promise, który rozwiązuje się do true, jeśli usunięcie się powiodło, false w przeciwnym razie.
+   * Deletes a product by its ID via the product service.
+   * Fetches products again on success.
+   * @param id Product ID to delete.
+   * @returns Promise that resolves to true if deletion succeeded, false otherwise.
    */
   deleteProduct: (id: string) => Promise<boolean>;
 }
@@ -61,7 +61,7 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
       set({ products, isLoading: false });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        error: error instanceof Error ? error.message : 'Unknown error',
         isLoading: false,
       });
     }
@@ -75,7 +75,7 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
       return product;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        error: error instanceof Error ? error.message : 'Unknown error',
         isLoading: false,
       });
       return null;
@@ -93,7 +93,7 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
       return null;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        error: error instanceof Error ? error.message : 'Unknown error',
         isLoading: false,
       });
       return null;
@@ -110,7 +110,7 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
       return success;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        error: error instanceof Error ? error.message : 'Unknown error',
         isLoading: false,
       });
       return false;

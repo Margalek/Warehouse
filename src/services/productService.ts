@@ -4,29 +4,29 @@ import type { Product } from '@/types/product';
 const API_URL = 'http://localhost:3001/api';
 
 /**
- * Pobiera wszystkie produkty z API.
- * Produkty są sortowane według daty modyfikacji w porządku malejącym.
- * @returns Tablica produktów.
+ * Fetches all products from the API.
+ * Products are sorted by modification date in descending order.
+ * @returns Array of products.
  */
 export async function getProducts(): Promise<Product[]> {
   try {
     const response = await fetch(`${API_URL}/products`);
-    if (!response.ok) throw new Error('Błąd podczas pobierania produktów');
+    if (!response.ok) throw new Error('Error fetching products');
     const products = await response.json();
     return products.sort(
       (a: Product, b: Product) =>
         new Date(b.dateModified).getTime() - new Date(a.dateModified).getTime(),
     );
   } catch (error) {
-    console.error('Błąd podczas pobierania produktów:', error);
+    console.error('Error fetching products:', error);
     throw error;
   }
 }
 
 /**
- * Pobiera pojedynczy produkt według jego ID.
- * @param id ID produktu do pobrania.
- * @returns Produkt, jeśli znaleziono, w przeciwnym razie undefined.
+ * Fetches a single product by its ID.
+ * @param id Product ID to fetch.
+ * @returns Product if found, otherwise undefined.
  */
 export async function getProductById(id: string): Promise<Product | undefined> {
   const products = await getProducts();
@@ -34,11 +34,11 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 }
 
 /**
- * Sprawdza, czy produkt o podanej nazwie i jednostce już istnieje.
- * Jest to pomocnicza funkcja dla logiki UI przed wywołaniem addProduct.
- * @param name Nazwa produktu.
- * @param unit Jednostka produktu.
- * @returns Istniejący produkt, jeśli znaleziono, w przeciwnym razie undefined.
+ * Checks if a product with the given name and unit already exists.
+ * This is a helper function for UI logic before calling addProduct.
+ * @param name Product name.
+ * @param unit Product unit.
+ * @returns Existing product if found, otherwise undefined.
  */
 export async function checkExistingProduct(
   name: string,
@@ -53,9 +53,9 @@ export async function checkExistingProduct(
 }
 
 /**
- * Dodaje nowy produkt do magazynu lub aktualizuje ilość, jeśli istnieje.
- * @param productData Dane nowego produktu, bez id, dateAdded i dateModified.
- * @returns Dodany lub zaktualizowany produkt.
+ * Adds a new product to the warehouse or updates the quantity if it exists.
+ * @param productData New product data, without id, dateAdded, and dateModified.
+ * @returns Added or updated product.
  */
 export async function addProduct(
   productData: Omit<Product, 'id' | 'dateAdded' | 'dateModified'>,
@@ -69,19 +69,19 @@ export async function addProduct(
       body: JSON.stringify(productData),
     });
 
-    if (!response.ok) throw new Error('Błąd podczas dodawania produktu');
+    if (!response.ok) throw new Error('Error adding product');
     return await response.json();
   } catch (error) {
-    console.error('Błąd podczas dodawania produktu:', error);
+    console.error('Error adding product:', error);
     throw error;
   }
 }
 
 /**
- * Aktualizuje istniejący produkt.
- * @param id ID produktu do aktualizacji.
- * @param updates Częściowe dane do aktualizacji produktu (bez id i dateAdded).
- * @returns Zaktualizowany produkt, jeśli znaleziono i zaktualizowano, w przeciwnym razie undefined.
+ * Updates an existing product.
+ * @param id Product ID to update.
+ * @param updates Partial data to update the product (without id and dateAdded).
+ * @returns Updated product if found and updated, otherwise undefined.
  */
 export async function updateProduct(
   id: string,
@@ -98,20 +98,20 @@ export async function updateProduct(
 
     if (!response.ok) {
       if (response.status === 404) return undefined;
-      throw new Error('Błąd podczas aktualizacji produktu');
+      throw new Error('Error updating product');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Błąd podczas aktualizacji produktu:', error);
+    console.error('Error updating product:', error);
     throw error;
   }
 }
 
 /**
- * Usuwa produkt z magazynu.
- * @param id ID produktu do usunięcia.
- * @returns True, jeśli produkt został pomyślnie usunięty, false w przeciwnym razie.
+ * Deletes a product from the warehouse.
+ * @param id Product ID to delete.
+ * @returns True if the product was successfully deleted, false otherwise.
  */
 export async function deleteProduct(id: string): Promise<boolean> {
   try {
@@ -121,20 +121,20 @@ export async function deleteProduct(id: string): Promise<boolean> {
 
     if (!response.ok) {
       if (response.status === 404) return false;
-      throw new Error('Błąd podczas usuwania produktu');
+      throw new Error('Error deleting product');
     }
 
     return true;
   } catch (error) {
-    console.error('Błąd podczas usuwania produktu:', error);
+    console.error('Error deleting product:', error);
     throw error;
   }
 }
 
 /**
- * Importuje produkty do magazynu z podanej tablicy.
- * @param importedProducts Tablica produktów do zaimportowania.
- * @param strategy Strategia importu: 'replace' (nadpisuje istniejący magazyn) lub 'merge' (łączy z istniejącym, nadpisując duplikaty według ID).
+ * Imports products into the warehouse from the provided array.
+ * @param importedProducts Array of products to import.
+ * @param strategy Import strategy: 'replace' (overwrites existing warehouse) or 'merge' (merges with existing, overwriting duplicates by ID).
  */
 export async function importProducts(
   importedProducts: Product[],
@@ -142,14 +142,14 @@ export async function importProducts(
 ): Promise<void> {
   try {
     if (strategy === 'replace') {
-      // Najpierw usuń wszystkie istniejące produkty
+      // First, delete all existing products
       const existingProducts = await getProducts();
       await Promise.all(existingProducts.map((p) => deleteProduct(p.id)));
 
-      // Następnie dodaj nowe produkty
+      // Then add new products
       await Promise.all(importedProducts.map((p) => addProduct(p)));
     } else if (strategy === 'merge') {
-      // Dodaj lub zaktualizuj każdy produkt
+      // Add or update each product
       await Promise.all(
         importedProducts.map((p) =>
           updateProduct(p.id, p).catch(() => addProduct(p)),
@@ -157,25 +157,25 @@ export async function importProducts(
       );
     }
   } catch (error) {
-    console.error('Błąd podczas importowania produktów:', error);
+    console.error('Error importing products:', error);
     throw error;
   }
 }
 
 /**
- * Eksportuje bieżący magazyn jako tablicę produktów.
- * @returns Tablica wszystkich produktów w magazynie.
+ * Exports the current warehouse as an array of products.
+ * @returns Array of all products in the warehouse.
  */
 export async function exportProducts(): Promise<Product[]> {
   return getProducts();
 }
 
 /**
- * Generuje raport CSV.
- * @param productsToReport Tablica produktów do uwzględnienia w raporcie.
- * @param type Typ raportu: 'full' (wszystkie dane produktu) lub 'shortages' (produkty poniżej minimumStockLevel).
- * @param globalMinStock Opcjonalny globalny minimalny poziom zapasów, używany, jeśli produkt nie ma własnego minimumStockLevel dla raportu niedoborów.
- * @returns String zawierający dane CSV.
+ * Generates a CSV report.
+ * @param productsToReport Array of products to include in the report.
+ * @param type Report type: 'full' (all product data) or 'shortages' (products below minimumStockLevel).
+ * @param globalMinStock Optional global minimum stock level, used if a product does not have its own minimumStockLevel for the shortages report.
+ * @returns String containing CSV data.
  */
 export function generateReportCSV(
   productsToReport: Product[],
@@ -203,7 +203,11 @@ export function generateReportCSV(
         p.minimumStockLevel !== undefined
           ? p.minimumStockLevel
           : globalMinStock;
-      return threshold !== undefined ? p.quantity < threshold : false;
+      // If no threshold, treat quantity === 0 as shortage
+      if (threshold === undefined) {
+        return p.quantity === 0;
+      }
+      return p.quantity < threshold;
     });
     columns = [
       'id',
