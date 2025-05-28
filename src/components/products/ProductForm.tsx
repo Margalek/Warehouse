@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import type { ControllerRenderProps } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -66,6 +67,7 @@ export function ProductForm({
   initialData,
   isLoading,
 }: ProductFormProps) {
+  const navigate = useNavigate();
   const {
     control,
     handleSubmit,
@@ -125,6 +127,10 @@ export function ProductForm({
     InternalFormShape,
     keyof InternalFormShape
   >;
+
+  const handleCancel = () => {
+    navigate('/');
+  };
 
   return (
     <form onSubmit={handleSubmit(processSubmit)} className="space-y-6">
@@ -249,13 +255,18 @@ export function ProductForm({
         )}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading
-          ? 'Submitting...'
-          : initialData
-            ? 'Save Changes'
-            : 'Add Product'}
-      </Button>
+      <div className="flex gap-4 justify-end">
+        <Button type="button" variant="outline" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading
+            ? 'Submitting...'
+            : initialData
+              ? 'Save Changes'
+              : 'Add Product'}
+        </Button>
+      </div>
     </form>
   );
 }

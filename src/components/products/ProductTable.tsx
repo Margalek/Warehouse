@@ -110,11 +110,8 @@ export function ProductTable({
         <TableBody>
           {products.map((product) => (
             <TableRow key={product.id}>
-              <TableCell
-                className="font-mono text-xs truncate"
-                title={product.id}
-              >
-                {product.id.substring(0, 8)}...
+              <TableCell className="font-mono text-sm" title={product.id}>
+                {product.id}
               </TableCell>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell className="text-right">{product.quantity}</TableCell>

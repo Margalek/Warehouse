@@ -67,7 +67,11 @@ export function FileUpload({
         accept={acceptedFileTypes}
         className="hidden" // Hidden, triggered by the button
       />
-      <Button variant={buttonVariant} onClick={triggerFileSelect}>
+      <Button
+        variant={buttonVariant}
+        onClick={triggerFileSelect}
+        className="w-full"
+      >
         {buttonText}
       </Button>
     </div>
