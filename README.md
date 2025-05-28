@@ -25,14 +25,14 @@ A web-based warehouse management system that enables product tracking, inventory
 1. Clone the repository:
 
 ```bash
-git clone [repository-url]
+git clone https://github.com/margalek/Warehouse
 cd warehouse
 ```
 
 2. Install dependencies:
 
 ```bash
-npm install
+npm i
 ```
 
 ## Running the Application
