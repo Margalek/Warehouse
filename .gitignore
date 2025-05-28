@@ -23,3 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 server/data/warehouse.json
+server/data/meta.json
