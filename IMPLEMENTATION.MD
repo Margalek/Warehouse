@@ -540,4 +540,26 @@ Create comprehensive documentation as per `REQUIREMENTS.MD` (3.3) and `REVIEW_PR
     *   Assign tasks and track progress.
 *   **Reference**: `REVIEW_PROCESS.MD` (mentions Trello for progress documentation).
 
+
+## 16. Backend API Server (`/server`)
+
+The `/server` directory provides a simple Express.js backend for persistent product storage and API endpoints. This is used instead of (or in addition to) browser Local Storage for more realistic data management and multi-user scenarios.
+
+### 16.1. `server.js`
+- **Purpose**: Main entry point for the Express server.
+- **Endpoints**:
+  - `GET /api/products`: Returns all products as JSON.
+  - `POST /api/products`: Adds a new product (auto-generates ID, timestamps).
+  - `PUT /api/products/:id`: Updates an existing product by ID.
+  - `DELETE /api/products/:id`: Deletes a product by ID.
+- **Data Storage**: Reads/writes product data to `server/data/warehouse.json` and manages product ID sequencing in `server/data/meta.json`.
+- **Initialization**: Ensures the data directory and files exist on startup.
+- **Port**: Runs on port 3001 by default.
+
+### 16.2. `/server/data/`
+- **Purpose**: Stores persistent data for the backend API.
+- **Files**:
+  - `warehouse.json`: Array of product objects, each with fields like `id`, `name`, `quantity`, `unit`, `dateAdded`, `dateModified`, and optionally `minimumStockLevel`.
+  - `meta.json`: Stores metadata, currently only the last used product ID (e.g., `{ "lastId": 4 }`).
+
 This detailed plan should guide the development of the Warehouse Inventory Management SPA, ensuring all requirements are met and aligning with best practices for software development. 
