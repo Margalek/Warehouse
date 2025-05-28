@@ -1,52 +1,50 @@
-import { v4 as uuidv4 } from 'uuid';
-import { formatISO } from 'date-fns';
 import { unparse } from 'papaparse';
 import type { Product } from '@/types/product';
-import * as localStorageService from './localStorageService';
+
+const API_URL = 'http://localhost:3001/api';
 
 /**
- * The key used to store inventory data in Local Storage.
+ * Pobiera wszystkie produkty z API.
+ * Produkty są sortowane według daty modyfikacji w porządku malejącym.
+ * @returns Tablica produktów.
  */
-export const INVENTORY_STORAGE_KEY = 'warehouseInventoryData';
-
-/**
- * Retrieves all products from Local Storage.
- * Products are sorted by dateModified in descending order by default.
- * @returns An array of products.
- */
-export function getProducts(): Product[] {
-  const products =
-    localStorageService.getItem<Product[]>(INVENTORY_STORAGE_KEY) || [];
-  // Default sort: By Date Modified (Newest first) as per example implementation,
-  // though requirements doc doesn't explicitly state default sort for this raw getter.
-  return products.sort(
-    (a, b) =>
-      new Date(b.dateModified).getTime() - new Date(a.dateModified).getTime(),
-  );
+export async function getProducts(): Promise<Product[]> {
+  try {
+    const response = await fetch(`${API_URL}/products`);
+    if (!response.ok) throw new Error('Błąd podczas pobierania produktów');
+    const products = await response.json();
+    return products.sort(
+      (a: Product, b: Product) =>
+        new Date(b.dateModified).getTime() - new Date(a.dateModified).getTime(),
+    );
+  } catch (error) {
+    console.error('Błąd podczas pobierania produktów:', error);
+    throw error;
+  }
 }
 
 /**
- * Retrieves a single product by its ID.
- * @param id The ID of the product to retrieve.
- * @returns The product if found, otherwise undefined.
+ * Pobiera pojedynczy produkt według jego ID.
+ * @param id ID produktu do pobrania.
+ * @returns Produkt, jeśli znaleziono, w przeciwnym razie undefined.
  */
-export function getProductById(id: string): Product | undefined {
-  const products = getProducts();
+export async function getProductById(id: string): Promise<Product | undefined> {
+  const products = await getProducts();
   return products.find((p) => p.id === id);
 }
 
 /**
- * Checks if a product with the given name and unit already exists.
- * This is a helper for UI logic before calling addProduct.
- * @param name The name of the product.
- * @param unit The unit of the product.
- * @returns The existing product if found, otherwise undefined.
+ * Sprawdza, czy produkt o podanej nazwie i jednostce już istnieje.
+ * Jest to pomocnicza funkcja dla logiki UI przed wywołaniem addProduct.
+ * @param name Nazwa produktu.
+ * @param unit Jednostka produktu.
+ * @returns Istniejący produkt, jeśli znaleziono, w przeciwnym razie undefined.
  */
-export function checkExistingProduct(
+export async function checkExistingProduct(
   name: string,
   unit: string,
-): Product | undefined {
-  const products = getProducts();
+): Promise<Product | undefined> {
+  const products = await getProducts();
   return products.find(
     (p) =>
       p.name.toLowerCase() === name.toLowerCase() &&
@@ -55,131 +53,129 @@ export function checkExistingProduct(
 }
 
 /**
- * Adds a new product to the inventory or updates quantity if it exists (based on name and unit).
- * If a product with the same name and unit exists, its quantity is updated.
- * Otherwise, a new product is created.
- * @param productData The data for the new product, excluding id, dateAdded, and dateModified.
- * @returns The added or updated product.
+ * Dodaje nowy produkt do magazynu lub aktualizuje ilość, jeśli istnieje.
+ * @param productData Dane nowego produktu, bez id, dateAdded i dateModified.
+ * @returns Dodany lub zaktualizowany produkt.
  */
-export function addProduct(
+export async function addProduct(
   productData: Omit<Product, 'id' | 'dateAdded' | 'dateModified'>,
-): Product {
-  const products = getProducts();
-  const now = formatISO(new Date());
+): Promise<Product> {
+  try {
+    const response = await fetch(`${API_URL}/products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(productData),
+    });
 
-  const existingProduct = checkExistingProduct(
-    productData.name,
-    productData.unit,
-  );
-
-  if (existingProduct) {
-    // Update existing product's quantity and location if provided
-    existingProduct.quantity += productData.quantity;
-    existingProduct.location =
-      productData.location !== undefined
-        ? productData.location
-        : existingProduct.location;
-    existingProduct.minimumStockLevel =
-      productData.minimumStockLevel !== undefined
-        ? productData.minimumStockLevel
-        : existingProduct.minimumStockLevel;
-    existingProduct.dateModified = now;
-    localStorageService.setItem(INVENTORY_STORAGE_KEY, products);
-    return existingProduct;
-  } else {
-    // Add new product
-    const newProduct: Product = {
-      ...productData,
-      id: uuidv4(),
-      dateAdded: now,
-      dateModified: now,
-    };
-    products.push(newProduct);
-    localStorageService.setItem(INVENTORY_STORAGE_KEY, products);
-    return newProduct;
+    if (!response.ok) throw new Error('Błąd podczas dodawania produktu');
+    return await response.json();
+  } catch (error) {
+    console.error('Błąd podczas dodawania produktu:', error);
+    throw error;
   }
 }
 
 /**
- * Updates an existing product.
- * @param id The ID of the product to update.
- * @param updates The partial data to update the product with (excluding id and dateAdded).
- * @returns The updated product if found and updated, otherwise undefined.
+ * Aktualizuje istniejący produkt.
+ * @param id ID produktu do aktualizacji.
+ * @param updates Częściowe dane do aktualizacji produktu (bez id i dateAdded).
+ * @returns Zaktualizowany produkt, jeśli znaleziono i zaktualizowano, w przeciwnym razie undefined.
  */
-export function updateProduct(
+export async function updateProduct(
   id: string,
   updates: Partial<Omit<Product, 'id' | 'dateAdded'>>,
-): Product | undefined {
-  const products = getProducts();
-  const productIndex = products.findIndex((p) => p.id === id);
+): Promise<Product | undefined> {
+  try {
+    const response = await fetch(`${API_URL}/products/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
 
-  if (productIndex === -1) {
-    return undefined;
+    if (!response.ok) {
+      if (response.status === 404) return undefined;
+      throw new Error('Błąd podczas aktualizacji produktu');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Błąd podczas aktualizacji produktu:', error);
+    throw error;
   }
-
-  const updatedProduct = {
-    ...products[productIndex],
-    ...updates,
-    dateModified: formatISO(new Date()),
-  };
-  products[productIndex] = updatedProduct;
-  localStorageService.setItem(INVENTORY_STORAGE_KEY, products);
-  return updatedProduct;
 }
 
 /**
- * Deletes a product from the inventory.
- * @param id The ID of the product to delete.
- * @returns True if the product was deleted successfully, false otherwise.
+ * Usuwa produkt z magazynu.
+ * @param id ID produktu do usunięcia.
+ * @returns True, jeśli produkt został pomyślnie usunięty, false w przeciwnym razie.
  */
-export function deleteProduct(id: string): boolean {
-  const products = getProducts();
-  const initialLength = products.length;
-  const updatedProducts = products.filter((p) => p.id !== id);
+export async function deleteProduct(id: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/products/${id}`, {
+      method: 'DELETE',
+    });
 
-  if (updatedProducts.length < initialLength) {
-    localStorageService.setItem(INVENTORY_STORAGE_KEY, updatedProducts);
+    if (!response.ok) {
+      if (response.status === 404) return false;
+      throw new Error('Błąd podczas usuwania produktu');
+    }
+
     return true;
+  } catch (error) {
+    console.error('Błąd podczas usuwania produktu:', error);
+    throw error;
   }
-  return false;
 }
 
 /**
- * Imports products into the inventory from a given array.
- * @param importedProducts An array of products to import.
- * @param strategy The import strategy: 'replace' (overwrites existing inventory) or 'merge' (merges with existing, overwriting duplicates by ID).
+ * Importuje produkty do magazynu z podanej tablicy.
+ * @param importedProducts Tablica produktów do zaimportowania.
+ * @param strategy Strategia importu: 'replace' (nadpisuje istniejący magazyn) lub 'merge' (łączy z istniejącym, nadpisując duplikaty według ID).
  */
-export function importProducts(
+export async function importProducts(
   importedProducts: Product[],
   strategy: 'replace' | 'merge',
-): void {
-  if (strategy === 'replace') {
-    localStorageService.setItem(INVENTORY_STORAGE_KEY, importedProducts);
-  } else if (strategy === 'merge') {
-    const currentProducts = getProducts();
-    const productMap = new Map(currentProducts.map((p) => [p.id, p]));
-    importedProducts.forEach((p) => productMap.set(p.id, p));
-    localStorageService.setItem(
-      INVENTORY_STORAGE_KEY,
-      Array.from(productMap.values()),
-    );
+): Promise<void> {
+  try {
+    if (strategy === 'replace') {
+      // Najpierw usuń wszystkie istniejące produkty
+      const existingProducts = await getProducts();
+      await Promise.all(existingProducts.map((p) => deleteProduct(p.id)));
+
+      // Następnie dodaj nowe produkty
+      await Promise.all(importedProducts.map((p) => addProduct(p)));
+    } else if (strategy === 'merge') {
+      // Dodaj lub zaktualizuj każdy produkt
+      await Promise.all(
+        importedProducts.map((p) =>
+          updateProduct(p.id, p).catch(() => addProduct(p)),
+        ),
+      );
+    }
+  } catch (error) {
+    console.error('Błąd podczas importowania produktów:', error);
+    throw error;
   }
 }
 
 /**
- * Exports the current inventory as an array of products.
- * @returns An array of all products in the inventory.
+ * Eksportuje bieżący magazyn jako tablicę produktów.
+ * @returns Tablica wszystkich produktów w magazynie.
  */
-export function exportProducts(): Product[] {
+export async function exportProducts(): Promise<Product[]> {
   return getProducts();
 }
 
 /**
- * Generates a CSV string for reporting.
- * @param productsToReport Array of products to include in the report.
- * @param type Type of report: 'full' (all product data) or 'shortages' (products below minimumStockLevel).
- * @param globalMinStock An optional global minimum stock level, used if a product doesn't have its own minimumStockLevel for shortages report.
- * @returns A string containing the CSV data.
+ * Generuje raport CSV.
+ * @param productsToReport Tablica produktów do uwzględnienia w raporcie.
+ * @param type Typ raportu: 'full' (wszystkie dane produktu) lub 'shortages' (produkty poniżej minimumStockLevel).
+ * @param globalMinStock Opcjonalny globalny minimalny poziom zapasów, używany, jeśli produkt nie ma własnego minimumStockLevel dla raportu niedoborów.
+ * @returns String zawierający dane CSV.
  */
 export function generateReportCSV(
   productsToReport: Product[],
@@ -202,7 +198,6 @@ export function generateReportCSV(
       'minimumStockLevel',
     ];
   } else {
-    // 'shortages'
     dataForCSV = productsToReport.filter((p) => {
       const threshold =
         p.minimumStockLevel !== undefined
@@ -221,10 +216,8 @@ export function generateReportCSV(
     ];
   }
 
-  // Select only the specified columns for the CSV
   const selectedData = dataForCSV.map((product) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const selectedProduct: any = {};
+    const selectedProduct: Record<string, unknown> = {};
     columns.forEach((column) => {
       selectedProduct[column] = product[column];
     });
@@ -232,13 +225,11 @@ export function generateReportCSV(
   });
 
   if (selectedData.length === 0) {
-    // Papa.unparse requires at least one row or explicit fields for header when data is empty.
-    // To ensure header is always present even for empty data:
     return unparse({ fields: columns.map(String), data: [] });
   }
 
   return unparse(selectedData, {
-    columns: columns.map(String), // PapaParse expects column names as strings
+    columns: columns.map(String),
     header: true,
   });
 }

@@ -4,39 +4,39 @@ import type { Product } from '@/types/product';
 import * as productService from '@/services/productService';
 
 export interface ProductState {
-  /** The list of all products in the inventory. */
+  /** Lista wszystkich produktów w magazynie. */
   products: Product[];
-  /** True if any product-related asynchronous operation is in progress. */
+  /** True, jeśli jakakolwiek operacja asynchroniczna jest w toku. */
   isLoading: boolean;
-  /** Stores an error message if an operation fails, otherwise null. */
+  /** Przechowuje komunikat o błędzie, jeśli operacja się nie powiedzie, w przeciwnym razie null. */
   error: string | null;
-  /** Fetches all products from the product service and updates the store. */
-  fetchProducts: () => void;
+  /** Pobiera wszystkie produkty z serwisu produktów i aktualizuje store. */
+  fetchProducts: () => Promise<void>;
   /**
-   * Adds a new product or updates an existing one (by name/unit) via the product service.
-   * Re-fetches products on success.
-   * @param productData The data for the new product.
-   * @returns A promise that resolves to the added/updated product, or null on error.
+   * Dodaje nowy produkt lub aktualizuje istniejący (według nazwy/jednostki) poprzez serwis produktów.
+   * Ponownie pobiera produkty po sukcesie.
+   * @param productData Dane nowego produktu.
+   * @returns Promise, który rozwiązuje się do dodanego/zaktualizowanego produktu lub null w przypadku błędu.
    */
   addProduct: (
     productData: Omit<Product, 'id' | 'dateAdded' | 'dateModified'>,
   ) => Promise<Product | null>;
   /**
-   * Updates an existing product by its ID via the product service.
-   * Re-fetches products on success.
-   * @param id The ID of the product to update.
-   * @param updates The partial data to update the product with.
-   * @returns A promise that resolves to the updated product, or null if not found or on error.
+   * Aktualizuje istniejący produkt według jego ID poprzez serwis produktów.
+   * Ponownie pobiera produkty po sukcesie.
+   * @param id ID produktu do aktualizacji.
+   * @param updates Częściowe dane do aktualizacji produktu.
+   * @returns Promise, który rozwiązuje się do zaktualizowanego produktu lub null, jeśli nie znaleziono lub wystąpił błąd.
    */
   updateProduct: (
     id: string,
     updates: Partial<Omit<Product, 'id' | 'dateAdded'>>,
   ) => Promise<Product | null>;
   /**
-   * Deletes a product by its ID via the product service.
-   * Re-fetches products on success.
-   * @param id The ID of the product to delete.
-   * @returns A promise that resolves to true if deletion was successful, false otherwise.
+   * Usuwa produkt według jego ID poprzez serwis produktów.
+   * Ponownie pobiera produkty po sukcesie.
+   * @param id ID produktu do usunięcia.
+   * @returns Promise, który rozwiązuje się do true, jeśli usunięcie się powiodło, false w przeciwnym razie.
    */
   deleteProduct: (id: string) => Promise<boolean>;
 }
@@ -54,28 +54,30 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchProducts: () => {
+  fetchProducts: async () => {
     set({ isLoading: true, error: null });
     try {
-      const products = productService.getProducts();
+      const products = await productService.getProducts();
       set({ products, isLoading: false });
-    } catch (e) {
-      const error = e instanceof Error ? e.message : 'Failed to fetch products';
-      set({ error, isLoading: false });
-      console.error(error);
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        isLoading: false,
+      });
     }
   },
 
   addProduct: async (productData) => {
     set({ isLoading: true, error: null });
     try {
-      const newProduct = productService.addProduct(productData);
-      get().fetchProducts();
-      return newProduct;
-    } catch (e) {
-      const error = e instanceof Error ? e.message : 'Failed to add product';
-      set({ error, isLoading: false });
-      console.error(error);
+      const product = await productService.addProduct(productData);
+      await get().fetchProducts();
+      return product;
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        isLoading: false,
+      });
       return null;
     }
   },
@@ -83,16 +85,17 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
   updateProduct: async (id, updates) => {
     set({ isLoading: true, error: null });
     try {
-      const updatedProduct = productService.updateProduct(id, updates);
-      if (updatedProduct) {
-        get().fetchProducts();
-        return updatedProduct;
+      const product = await productService.updateProduct(id, updates);
+      if (product) {
+        await get().fetchProducts();
+        return product;
       }
-      throw new Error('Product not found or update failed');
-    } catch (e) {
-      const error = e instanceof Error ? e.message : 'Failed to update product';
-      set({ error, isLoading: false });
-      console.error(error);
+      return null;
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        isLoading: false,
+      });
       return null;
     }
   },
@@ -100,16 +103,16 @@ const productStoreCreator: ProductStoreCreator = (set, get) => ({
   deleteProduct: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const success = productService.deleteProduct(id);
+      const success = await productService.deleteProduct(id);
       if (success) {
-        get().fetchProducts();
-        return true;
+        await get().fetchProducts();
       }
-      throw new Error('Product not found or deletion failed');
-    } catch (e) {
-      const error = e instanceof Error ? e.message : 'Failed to delete product';
-      set({ error, isLoading: false });
-      console.error(error);
+      return success;
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Nieznany błąd',
+        isLoading: false,
+      });
       return false;
     }
   },
