@@ -24,3 +24,11 @@ dist-ssr
 *.sw?
 server/data/warehouse.json
 server/data/meta.json
+
+# Ignore Vite build output
+dist/
+# Ignore TypeScript build output
+build/
+# Ignore coverage and docs if not needed in repo
+coverage/
+docs/
